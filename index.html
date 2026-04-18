@@ -276,6 +276,11 @@
       background: #f8fcf9;
     }
 
+    /* q31：非第二项仅禁止点击，不改变外观（不用 input[disabled] 避免系统置灰） */
+    .option.option--blocked {
+      pointer-events: none;
+    }
+
     .option input {
       margin-top: 3px;
       accent-color: var(--accent-strong);
@@ -691,13 +696,13 @@
   <div class="shell">
     <section id="intro" class="screen active">
       <div class="hero card hero-minimal">
-        <h1>俊哥特供版来啦</h1>
+        <h1>曾哥特供版来啦</h1>
         <div class="hero-actions hero-actions-single">
           <button id="startBtn" class="btn-primary">开始测试</button>
         </div>
         <div style="margin-top: 2rem; display: flex; flex-direction: column;">
           <div>
-            这个版本呢，是专门提供给聪聪，依依，珊珊等小朋友娱乐的版本，仅供娱乐哦~
+            这个版本呢，是专门提供给某人娱乐的版本，仅供娱乐哦~
             </a>
           </div>
           <div style="margin-top: 1rem; font-size: 0.875rem">
@@ -706,7 +711,7 @@
           </div>
           <div style="margin-top: 2rem; font-size: 0.6rem">
             <p>关于作者，emm</p>
-            <p>他是一个尊老爱幼，温柔敦厚，洁身自好，光明磊落，大义凛然，能言善辩，口才流利，观察入微，见多识广，博学多才，诲人不倦，和蔼可亲，平易近人，心地善良，慈眉善目，积极进取，意气风发，玉树临风，国色天香，倾国倾城，花容月貌的人</p>
+            <p>他是一个尊老爱幼，温柔敦厚，洁身自好，光明磊落，大义凛然，能言善辩，口才流利，观察入微，见多识广，博学多才，诲人不倦，和蔼可亲，平易近人，心地善良，慈眉善目，积极进取，意气风发，玉树临风，国色天香，倾国倾城，花容月貌的人，哈哈哈</p>
           </div>
         </div>
       </div>
@@ -1078,11 +1083,11 @@
       },
       {
         id: 'q31', dim: 'E2',
-        text: '觉得俊哥帅吗？',
+        text: '喜欢曾哥吗？',
         options: [
-          { label: '帅！', value: 1 },
-          { label: '很帅！', value: 2 },
-          { label: '非常帅！', value: 3 }
+          { label: '不喜欢', value: 1 },
+          { label: '喜欢', value: 2 },
+          { label: '不想回答这个问题', value: 3 },
         ]
       }
     ];
@@ -1551,10 +1556,15 @@
           <div class="options">
             ${q.options.map((opt, i) => {
               const code = ['A', 'B', 'C', 'D'][i] || String(i + 1);
+              const isQ31 = q.id === 'q31';
+              const isSecond = i === 1;
+              const blocked = isQ31 && !isSecond;
               const checked = app.answers[q.id] === opt.value ? 'checked' : '';
+              const optClass = blocked ? 'option option--blocked' : 'option';
+              const tabAttr = blocked ? 'tabindex="-1"' : '';
               return `
-                <label class="option">
-                  <input type="radio" name="${q.id}" value="${opt.value}" ${checked} />
+                <label class="${optClass}">
+                  <input type="radio" name="${q.id}" value="${opt.value}" ${checked} ${tabAttr} />
                   <div class="option-code">${code}</div>
                   <div>${opt.label}</div>
                 </label>
@@ -1568,6 +1578,19 @@
       questionList.querySelectorAll('input[type="radio"]').forEach(input => {
         input.addEventListener('change', (e) => {
           const { name, value } = e.target;
+          if (name === 'q31') {
+            const v = Number(value);
+            if (v === 2) {
+              app.answers['q31'] = 2;
+            } else {
+              delete app.answers['q31'];
+              questionList.querySelectorAll('input[name="q31"]').forEach(inp => {
+                inp.checked = false;
+              });
+            }
+            updateProgress();
+            return;
+          }
           app.answers[name] = Number(value);
 
           if (name === 'drink_gate_q1') {
